@@ -1,0 +1,51 @@
+version: "3.4" 
+
+# define all services
+services:
+
+  cakephp:
+    build:
+      context: ./cakephp
+    # When docker-compose build has run successfully you'll have an image called cakephp:latest
+    image: cakephp:latest
+    # When docker-compose up has run you'll have a container running called cakephp
+    container_name: cakephp
+    networks: 
+      - cakephp
+    ports:
+      - "4000:80"
+    # we depending on the mysql backend
+    depends_on:
+      - mysql
+    # we mount the working dir into the container, handy for development 
+    volumes:
+      - type: bind
+        source: ./cakephp
+        target: /var/www/html/
+    env_file:
+     - ./cakephp/mysql.env
+
+  mysql:
+    image: mysql:5.7.27
+    container_name: mysql
+    networks:
+      - cakephp
+    ports:
+      - "3306:3306"
+    # we mount a datavolume to make sure we don't loose data
+    volumes:
+       - mysql_data:/var/lib/mysql
+    # setting some envvars to create the DB
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpasswd
+      - MYSQL_USER=developer
+      - MYSQL_PASSWORD=dev123
+      - MYSQL_DATABASE=cakephp
+
+volumes:
+    mysql_data:
+
+networks:
+  cakephp:
+    driver: bridge 
+    attachable: true
